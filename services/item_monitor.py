@@ -19,6 +19,8 @@ async def process_new_items(
 ) -> None:
     user_id = message.from_user.id
     new_items = await scraper.find_new_items(user_id, search_params)
+    if not new_items:
+        return
 
     for item in new_items:
         await notify_user(message, item)
