@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardRemove
 
 from infrastructure.mongo_repository import ItemRepository
 from models.search_params import SearchParams
@@ -48,4 +48,11 @@ async def run_monitoring(
 
     except asyncio.CancelledError:
         logger.info("Stopped monitoring user %s", user_id)
-        raise
+
+    except Exception:
+        logger.exception("Monitoring failed for user %s", user_id)
+
+        await message.answer(
+            "Сталася помилка під час моніторингу. Пошук зупинено.",
+            reply_markup=ReplyKeyboardRemove(),
+        )
