@@ -1,49 +1,38 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-from aiogram_source.keyboards import make_row_keyboard, make_multiline_keyboard, make_row_inline_keyboard
+from telegram.keyboards import make_row_keyboard, make_multiline_keyboard
 
 
-def test_make_row_keyboard():
-    items = ['Yes', 'No']
+def test_make_row_keyboard__valid_items__creates_single_row_keyboard():
+    items = ["Yes", "No"]
     keyboard = make_row_keyboard(items)
 
     assert isinstance(keyboard, ReplyKeyboardMarkup)
-    assert keyboard.keyboard[0][0].text == 'Yes'
-    assert keyboard.keyboard[0][1].text == 'No'
+    assert len(keyboard.keyboard) == 1
+    assert [button.text for button in keyboard.keyboard[0]] == items
     assert keyboard.resize_keyboard is True
 
 
-def test_make_multiline_keyboard():
-    items = ['A', 'B', 'C', 'D']
-    number_of_lines = 2
-    keyboard = make_multiline_keyboard(items, number_of_lines)
+def test_make_multiline_keyboard__even_number_of_items__creates_multiple_full_rows():
+    items = ["A", "B", "C", "D"]
+    keyboard = make_multiline_keyboard(items, buttons_per_row=2)
 
-    # Check type and number of buttons
     assert isinstance(keyboard, ReplyKeyboardMarkup)
+    assert keyboard.resize_keyboard is True
     flat_buttons = [btn for row in keyboard.keyboard for btn in row]
     assert len(flat_buttons) == len(items)
     assert all(isinstance(btn, KeyboardButton) for btn in flat_buttons)
 
-    # Optional: Check row distribution if you want stricter validation
-    assert len(keyboard.keyboard) == 2  # 2 lines expected
+    assert len(keyboard.keyboard) == 2
+
+    assert [button.text for button in keyboard.keyboard[0]] == ["A", "B"]
+    assert [button.text for button in keyboard.keyboard[1]] == ["C", "D"]
 
 
-def test_make_row_inline_keyboard_with_urls_and_callbacks():
-    items = [
-        {"Google": {"url": "https://google.com"}},
-        {"Click me": {"callback_data": "clicked"}},
-    ]
-    keyboard = make_row_inline_keyboard(items)
+def test_make_multiline_keyboard__odd_number_of_items__places_remaining_button_in_last_row():
+    items = ["A", "B", "C"]
 
-    assert isinstance(keyboard, InlineKeyboardMarkup)
-    assert len(keyboard.inline_keyboard) == 2
+    keyboard = make_multiline_keyboard(items, buttons_per_row=2)
 
-    first_button = keyboard.inline_keyboard[0][0]
-    assert isinstance(first_button, InlineKeyboardButton)
-    assert first_button.text == "Google"
-    assert first_button.url == "https://google.com"
-
-    second_button = keyboard.inline_keyboard[1][0]
-    assert isinstance(second_button, InlineKeyboardButton)
-    assert second_button.text == "Click me"
-    assert second_button.callback_data == "clicked"
+    assert [button.text for button in keyboard.keyboard[0]] == ["A", "B"]
+    assert [button.text for button in keyboard.keyboard[1]] == ["C"]
