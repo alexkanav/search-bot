@@ -1,7 +1,9 @@
-import keyboards
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
+
+import keyboards
+from config import MARKETPLACE_URLS, MIN_SEARCH_TIMEOUT_MINUTES, MAX_SEARCH_TIMEOUT_MINUTES
 from constants import SEARCH_BUTTON, CANCEL_BUTTON, ALL_UKRAINE, SELECT_REGION, ALL_REGION, UNSUPPORTED_BUTTON_MESSAGE
 from infrastructure.rabbitmq import RabbitMQ
 from models.search import SearchRequest
@@ -9,9 +11,6 @@ from services.search_control import stop_search, ask_for_action
 from services.search_service import SearchService
 from states import SearchFlow
 from utils.enums import Command
-
-from config import MARKETPLACE_URLS
-from config import MIN_SEARCH_TIMEOUT_MINUTES, MAX_SEARCH_TIMEOUT_MINUTES
 
 router = Router()
 
