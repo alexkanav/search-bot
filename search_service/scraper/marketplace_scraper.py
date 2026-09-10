@@ -8,7 +8,7 @@ from playwright.async_api import TimeoutError
 from playwright.async_api import async_playwright
 from pydantic import HttpUrl
 
-from config import DEFAULT_IMAGE, SEARCH_RESULTS_TIMEOUT_MS, PRICE_TIMEOUT_MS, ITEM_TIMEOUT_MS
+from config import SEARCH_RESULTS_TIMEOUT_MS, PRICE_TIMEOUT_MS, ITEM_TIMEOUT_MS
 from models.items import ItemCard
 from models.search import SearchParams
 from scraper.locators import SearchPageLocators
@@ -130,7 +130,7 @@ class MarketplaceScraper:
             image_url = (
                 urljoin(str(search_params.url), src)
                 if src
-                else DEFAULT_IMAGE
+                else None
             )
             return ItemCard(
                 chat_id=search_params.chat_id,
