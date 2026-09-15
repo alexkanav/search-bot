@@ -1,10 +1,11 @@
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from urllib.parse import urljoin
 
 from playwright.async_api import Browser, Page, Locator
 from playwright.async_api import BrowserContext, Playwright
-from playwright.async_api import TimeoutError
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from playwright.async_api import async_playwright
 from pydantic import HttpUrl
 
@@ -12,6 +13,8 @@ from config import SEARCH_RESULTS_TIMEOUT_MS, PRICE_TIMEOUT_MS, ITEM_TIMEOUT_MS
 from models.items import ItemCard
 from models.search import SearchParams
 from scraper.locators import SearchPageLocators
+
+logger = logging.getLogger(__name__)
 
 
 class MarketplaceScraper:
@@ -102,7 +105,10 @@ class MarketplaceScraper:
         return cards
 
     async def _extract_item(self, card: Locator, search_params: SearchParams, seen_ids: set[str]) -> ItemCard | None:
-        card_id = await card.get_attribute(SearchPageLocators.CARD_ID)
+        try:
+            card_id = await card.get_attribute(SearchPageLocators.CARD_ID, timeout=ITEM_TIMEOUT_MS)
+        except PlaywrightTimeoutError:
+            return None
 
         if not card_id or card_id in seen_ids:
             return None
@@ -115,7 +121,7 @@ class MarketplaceScraper:
             if price > search_params.max_price:
                 return None
 
-        except TimeoutError:
+        except PlaywrightTimeoutError:
             price = 0
 
         try:
@@ -143,7 +149,12 @@ class MarketplaceScraper:
                 item_url=item_url,
             )
 
-        except TimeoutError:
+        except PlaywrightTimeoutError:
+            logger.warning("Timeout extracting final details for card %s", card_id)
+            return None
+
+        except Exception:
+            logger.exception("Unexpected error during scraping for card %s", card_id)
             return None
 
     async def _collect_new_items(self, cards: Locator, search_params: SearchParams) -> list[ItemCard]:
